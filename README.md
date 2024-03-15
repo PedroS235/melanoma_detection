@@ -1,3 +1,3 @@
 # Melanoma Cancer Detection
 
-A deep learning project for the masters course
+A deep learning project for the masters course.
