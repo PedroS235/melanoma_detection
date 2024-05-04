@@ -53,11 +53,11 @@ class ImagePreprocessingPipeline:
 
         # Apply Otsu's thresholding
         _, mask = cv2.threshold(
-            gray_img, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
+            gray_img, 100, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
         )
 
         # Apply morphology for smoothness
-        kernel = np.ones((3, 3), np.uint8)
+        kernel = np.ones((2, 2), np.uint8)
         mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=res)
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel, iterations=res)
         mask = mask.astype(bool)
@@ -74,8 +74,8 @@ class ImagePreprocessingPipeline:
 
 def main():
 
-    benign_img = Image.open("../data/test/Benign/6318.jpg")
-    malignant_img = Image.open("../data/test/Malignant/5605.jpg")
+    benign_img = Image.open("./data/test/Benign/6318.jpg")
+    malignant_img = Image.open("./data/test/Malignant/5605.jpg")
 
     pipeline = ImagePreprocessingPipeline(2, 10)
 
