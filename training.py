@@ -11,7 +11,7 @@ import torchvision.transforms as transforms
 import torch.optim as optim
 from tqdm import tqdm
 
-BATCH_SIZE = 4
+BATCH_SIZE = 8
 EPOCHS = 2
 
 transform = transforms.Compose(

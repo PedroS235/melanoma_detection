@@ -1,3 +1,4 @@
+import sys
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -53,7 +54,7 @@ test_set = MelanomaDataset(create_test_dataset(), transform=transform)
 train_loader = DataLoader(train_set, BATCH_SIZE, shuffle=True, num_workers=2)
 test_loader = DataLoader(test_set, BATCH_SIZE, shuffle=True, num_workers=2)
 
-PATH = "./cifar_net.pth"
+PATH = sys.argv[1]
 net = Net()
 net.load_state_dict(torch.load(PATH))
 

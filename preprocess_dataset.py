@@ -4,11 +4,13 @@ image and the label of the image (0 for benign, 1 for malignant). The module als
 dataset class for the melanoma images. The dataset is a list of dictionaries, where each dictionary
 contains the path to an image and the label of the image (0 for benign, 1 for malignant).
 """
+
 import os
 from torch.utils.data import Dataset
 import torch
 from PIL import Image
 import numpy as np
+from img_utils import ImagePreprocessingPipeline
 
 # The images are stored in the following directories: Assumes data is located in ..data
 # Each image is 224x224 pixels and has 3 channels (RGB)
@@ -38,15 +40,19 @@ class MelanomaDataset(Dataset):
     def __init__(self, dataset, transform=None):
         self.dataset = dataset
         self.transform = transform
+        self.pipeline = ImagePreprocessingPipeline(3, 15)
 
     def __len__(self):
         return len(self.dataset)
 
     def __getitem__(self, idx):
         image = Image.open(self.dataset[idx][0])
+        image = self.pipeline.process(image)
         if self.transform:
             image = self.transform(image)
-        label = torch.tensor(int(self.dataset[idx][1]), dtype=torch.float)  # Ensure label is a long tensor
+        label = torch.tensor(
+            int(self.dataset[idx][1]), dtype=torch.float
+        )  # Ensure label is a long tensor
         return image, label
 
 
@@ -61,14 +67,10 @@ def create_train_dataset():
     """
     dataset = []
     for img in os.listdir(TRAIN_BENIGN_DIR):
-        dataset.append(
-            (os.path.join(TRAIN_BENIGN_DIR, img), 0)
-        )
+        dataset.append((os.path.join(TRAIN_BENIGN_DIR, img), 0))
 
     for img in os.listdir(TRAIN_MALIGNANT_DIR):
-        dataset.append(
-            (os.path.join(TRAIN_MALIGNANT_DIR, img), 1)
-        )
+        dataset.append((os.path.join(TRAIN_MALIGNANT_DIR, img), 1))
 
     dataset = np.array(dataset)
     # np.random.shuffle(dataset)
@@ -86,14 +88,10 @@ def create_test_dataset():
     """
     dataset = []
     for img in os.listdir(TEST_BENIGN_DIR):
-        dataset.append(
-            (os.path.join(TEST_BENIGN_DIR, img), 0)
-        )
+        dataset.append((os.path.join(TEST_BENIGN_DIR, img), 0))
 
     for img in os.listdir(TEST_MALIGNANT_DIR):
-        dataset.append(
-            (os.path.join(TEST_MALIGNANT_DIR, img), 1)
-        )
+        dataset.append((os.path.join(TEST_MALIGNANT_DIR, img), 1))
 
     dataset = np.array(dataset)
     # np.random.shuffle(dataset)
