@@ -6,8 +6,8 @@ A deep learning project for the masters course.
 
 - [x] Convert data into Pytorch Dataset Structure
 - [x] Create a Preprocessor Image pipeline (Contrast, sharpness, masking)
-- [ ] Load Dataset, with DataLoader
-- [ ] Create a CNN
-- [ ] Train Model
-- [ ] Test Model
+- [x] Load Dataset, with DataLoader
+- [x] Create a CNN
+- [x] Train Model
+- [x] Test Model
 - [ ] Metrics
