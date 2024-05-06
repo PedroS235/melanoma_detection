@@ -5,7 +5,12 @@ import numpy as np
 
 
 class ImagePreprocessingPipeline:
-    def __init__(self, contrast_factor: float = 2.0, sharpness_factor: float = 10.0):
+    def __init__(
+        self,
+        contrast_factor: float = 2.0,
+        sharpness_factor: float = 10.0,
+        apply_mask=False,
+    ):
         """Constructor of ImagePreprocessingPipeline
 
         Args:
@@ -14,8 +19,9 @@ class ImagePreprocessingPipeline:
         """
         self.contrast_factor = contrast_factor
         self.sharpness_factor = sharpness_factor
+        self.apply_mask = apply_mask
 
-    def process(self, img: Image.Image, apply_mask: bool = True) -> Image.Image:
+    def process(self, img: Image.Image) -> Image.Image:
         """Add contrast and sharpness and masks the skin around the melanoma
 
         Args:
@@ -36,7 +42,7 @@ class ImagePreprocessingPipeline:
         sharpness_enhancer = ImageEnhance.Sharpness(enhanced_img)
         enhanced_img = sharpness_enhancer.enhance(self.sharpness_factor)
 
-        if apply_mask:
+        if self.apply_mask:
             enhanced_img = self.__mask_img(enhanced_img, 4)
 
         return enhanced_img

@@ -6,27 +6,32 @@ from melanoma_detection.preprocess_dataset import (
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 import torch.optim as optim
-from melanoma_detection.network import Net
+from melanoma_detection.network import Net, ResNet
+from melanoma_detection.img_utils import ImagePreprocessingPipeline
 
 
-BATCH_SIZE = 8
+BATCH_SIZE = 4
 EPOCHS = 2
+
+img_pipeline = ImagePreprocessingPipeline(1, 1, False)
 
 transform = transforms.Compose(
     [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
 )  # mean, Standard diviation,  channels
 
 train_loader = DataLoader(
-    MelanomaDataset(create_train_dataset(), transform=transform),
+    MelanomaDataset(create_train_dataset(), transform=transform, pipeline=img_pipeline),
     BATCH_SIZE,
     shuffle=True,
     num_workers=5,
 )
 
-net = Net()
+# net = Net()
+net = ResNet()
 
 criterion = torch.nn.BCEWithLogitsLoss()
-optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+# optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+optimizer = optim.Adam(net.parameters())
 
 net.fit(train_loader, EPOCHS, optimizer, criterion)
 
