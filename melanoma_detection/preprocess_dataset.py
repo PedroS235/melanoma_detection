@@ -10,11 +10,10 @@ from torch.utils.data import Dataset
 import torch
 from PIL import Image
 import numpy as np
-from img_utils import ImagePreprocessingPipeline
 
 # The images are stored in the following directories: Assumes data is located in ..data
 # Each image is 224x224 pixels and has 3 channels (RGB)
-DATA_DIR = "./data"
+DATA_DIR = "./dataset"
 DATA_TRAIN_DIR = os.path.join(DATA_DIR, "train")
 DATA_TEST_DIR = os.path.join(DATA_DIR, "test")
 TRAIN_BENIGN_DIR = os.path.join(DATA_TRAIN_DIR, "Benign")
@@ -37,22 +36,20 @@ class MelanomaDataset(Dataset):
         sample: a dictionary containing the image and label of the image.
     """
 
-    def __init__(self, dataset, transform=None):
+    def __init__(self, dataset, transform=None, pipeline=None):
         self.dataset = dataset
         self.transform = transform
-        self.pipeline = ImagePreprocessingPipeline(3, 15)
+        self.pipeline = pipeline
 
     def __len__(self):
         return len(self.dataset)
 
     def __getitem__(self, idx):
+        label = self.dataset[idx][1]
         image = Image.open(self.dataset[idx][0])
-        image = self.pipeline.process(image)
-        if self.transform:
-            image = self.transform(image)
-        label = torch.tensor(
-            int(self.dataset[idx][1]), dtype=torch.float
-        )  # Ensure label is a long tensor
+        image = self.pipeline.process(image) if self.pipeline else image
+        image = self.transform(image) if self.transform else image
+        label = torch.tensor(int(label), dtype=torch.float)
         return image, label
 
 
