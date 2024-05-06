@@ -91,3 +91,77 @@ class Net(nn.Module):
 
     def load(self, path: str):
         self.load_state_dict(torch.load(path))
+
+
+import torch
+import torchvision.models as models
+from torch import nn
+from tqdm import tqdm
+
+
+class ResNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        # Load a pre-trained ResNet and modify it for binary classification
+        self.resnet = models.resnet50(pretrained=True)
+        for param in self.resnet.parameters():
+            param.requires_grad = False
+
+        # Change the final layer for binary classification
+        num_features = self.resnet.fc.in_features
+        self.resnet.fc = nn.Linear(num_features, 1)
+
+        self.resnet.to(self.device)
+
+    def forward(self, x):
+        return self.resnet(x)
+
+    def fit(self, x_loader, epochs, optimizer, criterion):
+        self.train()
+        for epoch in range(epochs):
+            running_loss = 0.0
+            progress_bar = tqdm(x_loader, desc=f"Epoch {epoch + 1}")
+
+            for i, data in enumerate(progress_bar):
+                inputs, labels = data[0].to(self.device), data[1].to(self.device)
+                optimizer.zero_grad()
+
+                outputs = self(inputs).squeeze()
+                loss = criterion(outputs, labels.float())
+                loss.backward()
+                optimizer.step()
+
+                running_loss += loss.item()
+                progress_bar.set_description(f"Loss: {running_loss / (i + 1):.6f}")
+
+            print(
+                f"Epoch [{epoch + 1}/{epochs}] - Loss: {running_loss / len(x_loader):.6f}"
+            )
+
+    def validate(self, x_loader):
+        self.eval()
+        correct = 0
+        total = 0
+        with torch.no_grad():
+            progress_bar = tqdm(x_loader)
+            for data in progress_bar:
+                inputs, labels = data[0].to(self.device), data[1].to(self.device)
+                outputs = self(inputs)
+
+                probabilities = torch.sigmoid(outputs).squeeze()
+                predicted_labels = (probabilities > 0.5).float()
+
+                total += labels.size(0)
+                correct += (predicted_labels == labels).sum().item()
+
+        print(
+            f"Accuracy of the network on the validation set: {100 * correct / total:.2f}%"
+        )
+
+    def save(self, path: str):
+        torch.save(self.state_dict(), path)
+
+    def load(self, path: str):
+        self.load_state_dict(torch.load(path))
