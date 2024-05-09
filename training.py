@@ -11,7 +11,7 @@ from melanoma_detection.img_utils import ImagePreprocessingPipeline
 
 
 BATCH_SIZE = 4
-EPOCHS = 2
+EPOCHS = 5
 
 img_pipeline = ImagePreprocessingPipeline(1, 1, False)
 

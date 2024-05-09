@@ -105,9 +105,7 @@ class ResNet(nn.Module):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Load a pre-trained ResNet and modify it for binary classification
-        self.resnet = models.resnet50(pretrained=True)
-        for param in self.resnet.parameters():
-            param.requires_grad = False
+        self.resnet = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
 
         # Change the final layer for binary classification
         num_features = self.resnet.fc.in_features
