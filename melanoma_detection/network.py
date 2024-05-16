@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 PKG_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
 
@@ -13,10 +14,10 @@ class Net(nn.Module):
         super().__init__()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        self.conv1 = nn.Conv2d(3, 32, kernel_size=5, padding=2)
+        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
         self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=5, padding=2)
-        self.conv3 = nn.Conv2d(64, 128, kernel_size=5, padding=2)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
         self.pool2 = nn.MaxPool2d(2, 2)
         self.fc1 = nn.Linear(
             128 * 28 * 28, 512
@@ -36,11 +37,14 @@ class Net(nn.Module):
         x = self.fc3(x)
         return x
 
-    def fit(self, x_loader, epochs, optimizer, criterion):
+    def fit(self, train_loader, val_loader, epochs, optimizer, criterion):
         self.train()
+        train_losses = []
+        val_accuracies = []
+
         for epoch in range(epochs):
             running_loss = 0.0
-            progress_bar = tqdm(x_loader, desc=f"Epoch {epoch + 1}")
+            progress_bar = tqdm(train_loader, desc=f"Epoch {epoch + 1}")
 
             for i, data in enumerate(progress_bar):
                 inputs, labels = data[0].to(self.device), data[1].to(self.device)
@@ -53,38 +57,60 @@ class Net(nn.Module):
                 optimizer.step()
 
                 running_loss += loss.item()
-
                 progress_bar.set_description(f"Loss: {running_loss / (i + 1):.6f}")
 
+            train_losses.append(running_loss / len(train_loader))
+            val_accuracy = self.validate(val_loader)
+            val_accuracies.append(val_accuracy)
+
             print(
-                f"Epoch [{epoch + 1}/{epochs}] - Loss: {running_loss / len(x_loader):.6f}"
+                f"Epoch [{epoch + 1}/{epochs}] - Loss: {running_loss / len(train_loader):.6f}, Val Accuracy: {val_accuracy:.2f}%"
             )
 
-    def validate(self, x_loader):
+        self.plot_metrics(train_losses, val_accuracies)
+
+    def validate(self, val_loader):
         self.eval()
         correct = 0
         total = 0
 
-        with torch.no_grad():  # Turn off gradients for validation, saves memory and computations
-            progress_bar = tqdm(x_loader)
+        with torch.no_grad():
+            progress_bar = tqdm(val_loader, desc="Validation")
             for data in progress_bar:
                 inputs, labels = data[0].to(self.device), data[1].to(self.device)
                 outputs = self(inputs)
 
-                # Apply sigmoid to convert logits to probabilities
                 probabilities = torch.sigmoid(outputs).squeeze()
-
-                # Convert probabilities to predicted class (0 or 1)
-                predicted_labels = (
-                    probabilities > 0.5
-                ).float()  # Using 0.5 as the threshold
+                predicted_labels = (probabilities > 0.5).float()
 
                 total += labels.size(0)
                 correct += (predicted_labels == labels).sum().item()
 
-        print(
-            f"Accuracy of the network on the validation set: {100 * correct / total:.2f}%"
-        )
+        accuracy = 100 * correct / total
+        print(f"Accuracy of the network on the validation set: {accuracy:.2f}%")
+        return accuracy
+
+    def plot_metrics(self, train_losses, val_accuracies):
+        epochs = range(1, len(train_losses) + 1)
+
+        plt.figure(figsize=(12, 5))
+
+        plt.subplot(1, 2, 1)
+        plt.plot(epochs, train_losses, label="Training Loss")
+        plt.xlabel("Epochs")
+        plt.ylabel("Loss")
+        plt.title("Training Loss over Epochs")
+        plt.legend()
+
+        plt.subplot(1, 2, 2)
+        plt.plot(epochs, val_accuracies, label="Validation Accuracy")
+        plt.xlabel("Epochs")
+        plt.ylabel("Accuracy (%)")
+        plt.title("Validation Accuracy over Epochs")
+        plt.legend()
+
+        plt.tight_layout()
+        plt.show()
 
     def save(self, path: str):
         torch.save(self.state_dict(), path)
@@ -104,10 +130,8 @@ class ResNet(nn.Module):
         super().__init__()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        # Load a pre-trained ResNet and modify it for binary classification
         self.resnet = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
 
-        # Change the final layer for binary classification
         num_features = self.resnet.fc.in_features
         self.resnet.fc = nn.Linear(num_features, 1)
 
@@ -116,11 +140,14 @@ class ResNet(nn.Module):
     def forward(self, x):
         return self.resnet(x)
 
-    def fit(self, x_loader, epochs, optimizer, criterion):
+    def fit(self, train_loader, val_loader, epochs, optimizer, criterion):
         self.train()
+        train_losses = []
+        val_accuracies = []
+
         for epoch in range(epochs):
             running_loss = 0.0
-            progress_bar = tqdm(x_loader, desc=f"Epoch {epoch + 1}")
+            progress_bar = tqdm(train_loader, desc=f"Epoch {epoch + 1}")
 
             for i, data in enumerate(progress_bar):
                 inputs, labels = data[0].to(self.device), data[1].to(self.device)
@@ -134,16 +161,23 @@ class ResNet(nn.Module):
                 running_loss += loss.item()
                 progress_bar.set_description(f"Loss: {running_loss / (i + 1):.6f}")
 
+            train_losses.append(running_loss / len(train_loader))
+            val_accuracy = self.validate(val_loader)
+            val_accuracies.append(val_accuracy)
+
             print(
-                f"Epoch [{epoch + 1}/{epochs}] - Loss: {running_loss / len(x_loader):.6f}"
+                f"Epoch [{epoch + 1}/{epochs}] - Loss: {running_loss / len(train_loader):.6f}, Val Accuracy: {val_accuracy:.2f}%"
             )
 
-    def validate(self, x_loader):
+        self.plot_metrics(train_losses, val_accuracies)
+
+    def validate(self, val_loader):
         self.eval()
         correct = 0
         total = 0
+
         with torch.no_grad():
-            progress_bar = tqdm(x_loader)
+            progress_bar = tqdm(val_loader, desc="Validation")
             for data in progress_bar:
                 inputs, labels = data[0].to(self.device), data[1].to(self.device)
                 outputs = self(inputs)
@@ -154,9 +188,31 @@ class ResNet(nn.Module):
                 total += labels.size(0)
                 correct += (predicted_labels == labels).sum().item()
 
-        print(
-            f"Accuracy of the network on the validation set: {100 * correct / total:.2f}%"
-        )
+        accuracy = 100 * correct / total
+        print(f"Accuracy of the network on the validation set: {accuracy:.2f}%")
+        return accuracy
+
+    def plot_metrics(self, train_losses, val_accuracies):
+        epochs = range(1, len(train_losses) + 1)
+
+        plt.figure(figsize=(12, 5))
+
+        plt.subplot(1, 2, 1)
+        plt.plot(epochs, train_losses, label="Training Loss")
+        plt.xlabel("Epochs")
+        plt.ylabel("Loss")
+        plt.title("Training Loss over Epochs")
+        plt.legend()
+
+        plt.subplot(1, 2, 2)
+        plt.plot(epochs, val_accuracies, label="Validation Accuracy")
+        plt.xlabel("Epochs")
+        plt.ylabel("Accuracy (%)")
+        plt.title("Validation Accuracy over Epochs")
+        plt.legend()
+
+        plt.tight_layout()
+        plt.show()
 
     def save(self, path: str):
         torch.save(self.state_dict(), path)
