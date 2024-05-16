@@ -1,6 +1,7 @@
 import torch
 from melanoma_detection.preprocess_dataset import (
     create_train_dataset,
+    create_test_dataset,
     MelanomaDataset,
 )
 from torch.utils.data import DataLoader
@@ -11,12 +12,17 @@ from melanoma_detection.img_utils import ImagePreprocessingPipeline
 
 
 BATCH_SIZE = 4
-EPOCHS = 5
+EPOCHS = 2
 
-img_pipeline = ImagePreprocessingPipeline(1, 1, False)
+
+# Imagenet normalization values
+mean = [0.485, 0.456, 0.406]
+std = [0.229, 0.224, 0.225]
+
+img_pipeline = ImagePreprocessingPipeline(2, 5, False)
 
 transform = transforms.Compose(
-    [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+    [transforms.ToTensor(), transforms.Normalize(mean, std)]
 )  # mean, Standard diviation,  channels
 
 train_loader = DataLoader(
@@ -26,14 +32,21 @@ train_loader = DataLoader(
     num_workers=5,
 )
 
-# net = Net()
-net = ResNet()
+test_loader = DataLoader(
+    MelanomaDataset(create_test_dataset(), transform=transform, pipeline=img_pipeline),
+    BATCH_SIZE,
+    shuffle=False,
+    num_workers=5,
+)
+
+net = Net()
+# net = ResNet()
 
 criterion = torch.nn.BCEWithLogitsLoss()
 # optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 optimizer = optim.Adam(net.parameters())
 
-net.fit(train_loader, EPOCHS, optimizer, criterion)
+net.fit(train_loader, test_loader, EPOCHS, optimizer, criterion)
 
 PATH = "./cifar_net.pth"
 net.save(PATH)

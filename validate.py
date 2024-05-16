@@ -8,14 +8,17 @@ import torchvision.transforms as transforms
 from melanoma_detection.network import Net, ResNet
 from melanoma_detection.img_utils import ImagePreprocessingPipeline
 
+# Imagenet normalization values
+mean = [0.485, 0.456, 0.406]
+std = [0.229, 0.224, 0.225]
 
 BATCH_SIZE = 4
 EPOCHS = 2
 
-img_pipeline = ImagePreprocessingPipeline(1, 1, False)
+img_pipeline = ImagePreprocessingPipeline(2, 5, False)
 
 transform = transforms.Compose(
-    [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+    [transforms.ToTensor(), transforms.Normalize(mean, std)]
 )  # mean, Standard diviation,  channels
 
 test_loader = DataLoader(
@@ -25,8 +28,8 @@ test_loader = DataLoader(
     num_workers=5,
 )
 
-# net = Net()
-net = ResNet()
+net = Net()
+# net = ResNet()
 
 PATH = sys.argv[1]
 
