@@ -1,14 +1,12 @@
 import sys
 import torch
-from melanoma_detection.loss_fn import L4Loss
 from melanoma_detection.preprocess_dataset import (
     create_test_dataset,
     MelanomaDataset,
 )
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
-from melanoma_detection.network import MelanomaNetwork, ResNet
-from melanoma_detection.img_utils import ImagePreprocessingPipeline
+from melanoma_detection.models.melanoma import MelanomaNetwork
 
 # Imagenet normalization values
 mean = [0.485, 0.456, 0.406]
@@ -36,7 +34,6 @@ test_loader = DataLoader(
 criterion = torch.nn.BCEWithLogitsLoss()
 
 net = MelanomaNetwork()
-# net = ResNet()
 
 PATH = sys.argv[1]
 

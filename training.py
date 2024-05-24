@@ -1,5 +1,4 @@
 import torch
-from melanoma_detection.loss_fn import L4Loss
 from melanoma_detection.preprocess_dataset import (
     create_train_dataset,
     create_test_dataset,
@@ -8,8 +7,8 @@ from melanoma_detection.preprocess_dataset import (
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 import torch.optim as optim
-from melanoma_detection.network import MelanomaNetwork, ResNet
-from melanoma_detection.img_utils import ImagePreprocessingPipeline
+from melanoma_detection.models.melanoma import MelanomaNetwork
+from melanoma_detection.models.resnet import ResNet
 
 
 BATCH_SIZE = 48
@@ -65,8 +64,8 @@ test_loader = DataLoader(
     num_workers=5,
 )
 
-net = MelanomaNetwork()
-# net = ResNet()
+# net = MelanomaNetwork()
+net = ResNet()
 
 criterion = torch.nn.BCEWithLogitsLoss()
 
