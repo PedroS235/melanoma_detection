@@ -39,7 +39,6 @@ class MelanomaDataset(Dataset):
     def __init__(self, dataset, transform=None, pipeline=None):
         self.dataset = dataset
         self.transform = transform
-        self.pipeline = pipeline
 
     def __len__(self):
         return len(self.dataset)
@@ -47,7 +46,6 @@ class MelanomaDataset(Dataset):
     def __getitem__(self, idx):
         label = self.dataset[idx][1]
         image = Image.open(self.dataset[idx][0])
-        image = self.pipeline.process(image) if self.pipeline else image
         image = self.transform(image) if self.transform else image
         label = torch.tensor(int(label), dtype=torch.float)
         return image, label
