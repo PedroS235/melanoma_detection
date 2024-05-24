@@ -36,7 +36,7 @@ class MelanomaDataset(Dataset):
         sample: a dictionary containing the image and label of the image.
     """
 
-    def __init__(self, dataset, transform=None, pipeline=None):
+    def __init__(self, dataset, transform=None):
         self.dataset = dataset
         self.transform = transform
 

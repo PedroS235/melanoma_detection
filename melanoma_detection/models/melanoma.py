@@ -1,11 +1,8 @@
 import os
 import sys
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from tqdm import tqdm
-from melanoma_detection.early_stopping import EarlyStopping
-from melanoma_detection.metrics_utils import plot_metrics, compute_metrics
+from torchvision.transforms.functional import torch
 from melanoma_detection.models.base import BaseNetwork
 
 PKG_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -25,7 +22,7 @@ class MelanomaNetwork(BaseNetwork):
         self.fc3 = nn.Linear(128, 1)
         self.to(self.device)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor):
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
         x = self.pool2(F.relu(self.conv3(x)))

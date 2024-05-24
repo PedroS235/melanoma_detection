@@ -1,12 +1,7 @@
 import os
 import sys
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torchvision.models as models
-from tqdm import tqdm
-from melanoma_detection.early_stopping import EarlyStopping
-from melanoma_detection.metrics_utils import plot_metrics, compute_metrics
 from melanoma_detection.models.base import BaseNetwork
 
 PKG_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))

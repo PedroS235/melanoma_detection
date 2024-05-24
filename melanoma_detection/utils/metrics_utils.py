@@ -1,3 +1,4 @@
+from typing import Dict
 import matplotlib.pyplot as plt
 import torch
 from sklearn.metrics import (
@@ -9,7 +10,7 @@ from sklearn.metrics import (
 )
 
 
-def compute_metrics(y_true, y_pred):
+def compute_metrics(y_true: torch.Tensor, y_pred: torch.Tensor) -> Dict[str, float]:
     y_pred = torch.sigmoid(y_pred).cpu().numpy() > 0.5
     y_true = y_true.cpu().numpy()
 
@@ -17,7 +18,7 @@ def compute_metrics(y_true, y_pred):
     precision = precision_score(y_true, y_pred)
     recall = recall_score(y_true, y_pred)
     f1 = f1_score(y_true, y_pred)
-    auc = roc_auc_score(y_true, y_pred)
+    auc = float(roc_auc_score(y_true, y_pred))
 
     return {
         "accuracy": accuracy,
@@ -28,7 +29,13 @@ def compute_metrics(y_true, y_pred):
     }
 
 
-def plot_metrics(train_losses, val_losses, train_accuracies, val_accuracies, metrics):
+def plot_metrics(
+    train_losses: torch.Tensor,
+    val_losses: torch.Tensor,
+    train_accuracies: torch.Tensor,
+    val_accuracies: torch.Tensor,
+    metrics: Dict[str, float],
+) -> None:
     epochs = range(1, len(train_losses) + 1)
 
     plt.figure(figsize=(14, 10))

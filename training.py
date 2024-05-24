@@ -7,17 +7,17 @@ from melanoma_detection.preprocess_dataset import (
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 import torch.optim as optim
-from melanoma_detection.models.melanoma import MelanomaNetwork
-from melanoma_detection.models.resnet import ResNet
+from melanoma_detection.models import MelanomaNetwork, ResNet
+from melanoma_detection.models.base import StoppingCriteria
 
 
-BATCH_SIZE = 48
+BATCH_SIZE = 32
 EPOCHS = 20
 
 
 # Imagenet normalization values
-mean = [0.485, 0.456, 0.406]
-std = [0.229, 0.224, 0.225]
+MEAN = [0.485, 0.456, 0.406]
+STD = [0.229, 0.224, 0.225]
 
 transform_train = transforms.Compose(
     [
@@ -32,7 +32,7 @@ transform_train = transforms.Compose(
         transforms.RandomVerticalFlip(),
         transforms.RandomRotation(20),
         transforms.ToTensor(),
-        transforms.Normalize(mean, std),
+        transforms.Normalize(MEAN, STD),
     ]
 )
 
@@ -46,7 +46,7 @@ transform_validation = transforms.Compose(
         # ),
         transforms.Resize((224, 224)),  # Resize the image to 224x224 pixels
         transforms.ToTensor(),
-        transforms.Normalize(mean, std),
+        transforms.Normalize(MEAN, STD),
     ]
 )
 
@@ -64,8 +64,8 @@ test_loader = DataLoader(
     num_workers=5,
 )
 
-# net = MelanomaNetwork()
-net = ResNet()
+net = MelanomaNetwork()
+# net = ResNet()
 
 criterion = torch.nn.BCEWithLogitsLoss()
 
@@ -85,8 +85,8 @@ net.fit(
     EPOCHS,
     optimizer,
     criterion,
+    StoppingCriteria(3),
     True,
-    early_stopping_patience=3,
 )
 
 PATH = "./best_model"
