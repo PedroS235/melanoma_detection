@@ -7,12 +7,18 @@ from melanoma_detection.preprocess_dataset import (
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 import torch.optim as optim
-from melanoma_detection.models import MelanomaNetwork, ResNet
+from melanoma_detection.models import MelanomaNetwork, MelanomaNetworkV2
 from melanoma_detection.models.base import StoppingCriteria
+from melanoma_detection.transforms import AdjustSharpness
 
 
-BATCH_SIZE = 32
-EPOCHS = 20
+# Set the seed for reproducibility
+seed = 42
+torch.manual_seed(seed)
+
+
+BATCH_SIZE = 42
+EPOCHS = 50
 
 
 # Imagenet normalization values
@@ -21,16 +27,11 @@ STD = [0.229, 0.224, 0.225]
 
 transform_train = transforms.Compose(
     [
-        # transforms.ColorJitter(
-        #     brightness=0.1863956988359896,
-        #     contrast=0.3355207249261889,
-        #     saturation=0.43541353636866553,
-        #     hue=0.07548291582198652,
-        # ),
         transforms.Resize((224, 224)),  # Resize the image to 224x224 pixels
         transforms.RandomHorizontalFlip(),
         transforms.RandomVerticalFlip(),
         transforms.RandomRotation(20),
+        AdjustSharpness(3),
         transforms.ToTensor(),
         transforms.Normalize(MEAN, STD),
     ]
@@ -38,13 +39,8 @@ transform_train = transforms.Compose(
 
 transform_validation = transforms.Compose(
     [
-        # transforms.ColorJitter(
-        #     brightness=0.1863956988359896,
-        #     contrast=0.3355207249261889,
-        #     saturation=0.43541353636866553,
-        #     hue=0.07548291582198652,
-        # ),
         transforms.Resize((224, 224)),  # Resize the image to 224x224 pixels
+        AdjustSharpness(3),
         transforms.ToTensor(),
         transforms.Normalize(MEAN, STD),
     ]
@@ -64,16 +60,12 @@ test_loader = DataLoader(
     num_workers=5,
 )
 
-net = MelanomaNetwork()
-# net = ResNet()
+net = MelanomaNetworkV2()
 
 criterion = torch.nn.BCEWithLogitsLoss()
 
 optimizer = optim.Adam(
     net.parameters(),
-    # lr=6.051040788116986e-05,
-    # betas=(0.8362066397681903, 0.9907655800812818),
-    # weight_decay=3.6250408963045035e-10,
     lr=0.0002288372831567034,
     betas=(0.8378331684737104, 0.9034144582679383),
     weight_decay=3.358130934902445e-09,

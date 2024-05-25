@@ -6,26 +6,33 @@ from melanoma_detection.preprocess_dataset import (
 )
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
-from melanoma_detection.models.melanoma import MelanomaNetwork
+from melanoma_detection.transforms import AdjustSharpness
+from melanoma_detection.models.melanoma import MelanomaNetwork, MelanomaNetworkV2
+
+# Set the seed for reproducibility
+seed = 42
+torch.manual_seed(seed)
+
+
+BATCH_SIZE = 42
+EPOCHS = 20
+
 
 # Imagenet normalization values
-mean = [0.485, 0.456, 0.406]
-std = [0.229, 0.224, 0.225]
+MEAN = [0.485, 0.456, 0.406]
+STD = [0.229, 0.224, 0.225]
 
-BATCH_SIZE = 32
-EPOCHS = 2
-
-transform = transforms.Compose(
+transform_validation = transforms.Compose(
     [
-        # transforms.ColorJitter(brightness=0.0, contrast=0.2, saturation=0.5, hue=0.0),
         transforms.Resize((224, 224)),  # Resize the image to 224x224 pixels
+        AdjustSharpness(3),
         transforms.ToTensor(),
-        transforms.Normalize(mean, std),
+        transforms.Normalize(MEAN, STD),
     ]
 )
 
 test_loader = DataLoader(
-    MelanomaDataset(create_test_dataset(), transform=transform),
+    MelanomaDataset(create_test_dataset(), transform=transform_validation),
     BATCH_SIZE,
     shuffle=False,
     num_workers=5,
@@ -33,9 +40,12 @@ test_loader = DataLoader(
 
 criterion = torch.nn.BCEWithLogitsLoss()
 
-net = MelanomaNetwork()
+net = MelanomaNetworkV2()
 
 PATH = sys.argv[1]
 
 net.load(PATH)
-net.validate(test_loader, criterion)
+_, _, metrics = net.validate(test_loader, criterion)
+
+for key, value in metrics.items():
+    print(f"    {key}: {value}")

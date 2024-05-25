@@ -74,11 +74,11 @@ class BaseNetwork(nn.Module):
                 val_accuracies.append(val_accuracy)
                 if verbose:
                     print(
-                        f"Epoch [{epoch + 1}/{epochs}] - "
-                        f"Train Loss: {running_loss / len(train_loader):.6f}, "
-                        f"Train Accuracy: {train_accuracy:.2f}%, "
-                        f"Val Loss: {val_loss:.6f}, "
-                        f"Val Accuracy: {val_accuracy:.2f}%, "
+                        f"Epoch [{epoch + 1}/{epochs}] - \n"
+                        f"Train Loss: {running_loss / len(train_loader):.6f}\n"
+                        f"Train Accuracy: {train_accuracy:.2f}%\n"
+                        f"Val Loss: {val_loss:.6f}\n"
+                        f"Val Accuracy: {val_accuracy:.2f}%\n"
                         f"Val Metrics: {val_metrics}"
                     )
 
