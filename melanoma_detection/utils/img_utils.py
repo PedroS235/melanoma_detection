@@ -52,7 +52,7 @@ class ImagePreprocessingPipeline:
         cv2_img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
 
         # Apply Blur
-        blur = cv2.GaussianBlur(cv2_img, (5, 5), 0)
+        blur = cv2.GaussianBlur(cv2_img, (3, 3), 0)
 
         # Convert to grayscale
         gray_img = cv2.cvtColor(blur, cv2.COLOR_BGR2GRAY)
@@ -76,6 +76,11 @@ class ImagePreprocessingPipeline:
         final_img = Image.fromarray(cv2.cvtColor(output_img, cv2.COLOR_BGR2RGB))
 
         return final_img
+
+def plot_image(img):
+    npimg = img.numpy()
+    plt.imshow(np.transpose(npimg, (1, 2, 0)))
+    plt.show()
 
 
 def main():
