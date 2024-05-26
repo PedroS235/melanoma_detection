@@ -8,14 +8,14 @@ from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 from melanoma_detection.transforms import AdjustSharpness
 from melanoma_detection.models.melanoma import MelanomaNetwork, MelanomaNetworkV2
+from melanoma_detection.utils.metrics_utils import generate_plots_paper
 
 # Set the seed for reproducibility
-seed = 42
-torch.manual_seed(seed)
+# seed = 42
+# torch.manual_seed(seed)
 
 
 BATCH_SIZE = 42
-EPOCHS = 20
 
 
 # Imagenet normalization values
@@ -45,7 +45,10 @@ net = MelanomaNetworkV2()
 PATH = sys.argv[1]
 
 net.load(PATH)
-_, _, metrics = net.validate(test_loader, criterion)
+y_true, y_pred, _, _, metrics = net.validate(test_loader, criterion)
 
 for key, value in metrics.items():
     print(f"    {key}: {value}")
+
+
+generate_plots_paper(y_true, y_pred)

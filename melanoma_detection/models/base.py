@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, List
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -25,6 +25,7 @@ class BaseNetwork(nn.Module):
         criterion: nn.Module,
         stopping_criteria=None,
         verbose: bool = True,
+        show_plot: bool = True,
     ) -> None:
         assert train_loader is not None, "Train data cannot be empty"
         self.train()
@@ -33,6 +34,8 @@ class BaseNetwork(nn.Module):
         train_accuracies = []
         val_accuracies = []
         val_metrics = []
+        y_true = []
+        y_pred = []
 
         for epoch in range(epochs):
             running_loss = 0.0
@@ -67,11 +70,13 @@ class BaseNetwork(nn.Module):
             train_accuracies.append(train_accuracy)
 
             if val_loader:
-                val_loss, val_accuracy, val_metrics = self.validate(
+                true, pred, val_loss, val_accuracy, val_metrics = self.validate(
                     val_loader, criterion, verbose
                 )
                 val_losses.append(val_loss)
                 val_accuracies.append(val_accuracy)
+                y_true.append(true)
+                y_pred.append(pred)
                 if verbose:
                     print(
                         f"Epoch [{epoch + 1}/{epochs}] - \n"
@@ -95,14 +100,22 @@ class BaseNetwork(nn.Module):
                         f"Epoch [{epoch + 1}/{epochs}] - Loss: {running_loss / len(train_loader):.6f}"
                     )
 
-        if verbose:
+        if verbose and show_plot:
+            y_true = torch.cat(y_true)
+            y_pred = torch.cat(y_pred)
             plot_metrics(
-                train_losses, val_losses, train_accuracies, val_accuracies, val_metrics
+                train_losses,
+                val_losses,
+                train_accuracies,
+                val_accuracies,
+                val_metrics,
+                y_true,
+                y_pred,
             )
 
     def validate(
         self, val_loader: DataLoader, criterion: nn.Module, verbose: bool = True
-    ) -> Tuple[float, float, Dict[str, float]]:
+    ) -> Tuple[torch.Tensor, torch.Tensor, float, float, Dict[str, float]]:
         self.eval()
         running_loss = 0.0
         correct = 0
@@ -137,7 +150,13 @@ class BaseNetwork(nn.Module):
                 f"Validation Loss: {running_loss / len(val_loader):.6f}, Accuracy: {accuracy:.2f}%"
             )
 
-        return running_loss / len(val_loader), accuracy, metrics
+        return (
+            all_labels,
+            all_outputs,
+            running_loss / len(val_loader),
+            accuracy,
+            metrics,
+        )
 
     def save(self, path: str) -> None:
         torch.save(self.state_dict(), path)

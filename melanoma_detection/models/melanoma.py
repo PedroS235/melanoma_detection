@@ -32,6 +32,8 @@ class MelanomaNetwork(BaseNetwork):
         x = self.dropout(x)  # Apply dropout during training
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
+        x = torch.sigmoid(x)
+        print("Final Layer", x)
         return x
 
 
@@ -59,4 +61,7 @@ class MelanomaNetworkV2(BaseNetwork):
         x = self.dropout(x)  # Apply dropout during training
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
+
+        # Final Output
+        x = torch.sigmoid(x)
         return x

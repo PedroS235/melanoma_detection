@@ -78,6 +78,7 @@ def objective(trial):
         criterion,
         StoppingCriteria(3),
         True,
+        False,
     )
     val_loss, _, _ = net.validate(train_loader, criterion, verbose=False)
 

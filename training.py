@@ -13,11 +13,11 @@ from melanoma_detection.transforms import AdjustSharpness
 
 
 # Set the seed for reproducibility
-seed = 42
-torch.manual_seed(seed)
+# seed = 42
+# torch.manual_seed(seed)
 
 
-BATCH_SIZE = 42
+BATCH_SIZE = 50
 EPOCHS = 50
 
 
@@ -66,9 +66,12 @@ criterion = torch.nn.BCEWithLogitsLoss()
 
 optimizer = optim.Adam(
     net.parameters(),
-    lr=0.0002288372831567034,
-    betas=(0.8378331684737104, 0.9034144582679383),
-    weight_decay=3.358130934902445e-09,
+    # lr=0.0002288372831567034,
+    # betas=(0.8378331684737104, 0.9034144582679383),
+    # weight_decay=3.358130934902445e-09,
+    lr=0.0003561766450517019,
+    betas=(0.907045935360867, 0.9440206043524612),
+    weight_decay=1.2435408847745624e-09,
 )
 
 net.fit(
@@ -81,5 +84,5 @@ net.fit(
     True,
 )
 
-PATH = "./best_model"
+PATH = "./best_model.pth"
 net.save(PATH)
