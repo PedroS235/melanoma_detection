@@ -3,8 +3,8 @@ from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 import torch.optim as optim
 from melanoma_detection.models.melanoma import MelanomaNetworkV2
-from melanoma_detection.models.base import StoppingCriteria
-from melanoma_detection.transforms import AdjustSharpness
+from melanoma_detection.models.base import EarlyStopping
+from melanoma_detection.transforms import SharpnessEnhancement
 from melanoma_detection.preprocess_dataset import (
     create_train_dataset,
     create_test_dataset,
@@ -12,12 +12,12 @@ from melanoma_detection.preprocess_dataset import (
 )
 import optuna
 
-BATCH_SIZE = 42
-EPOCHS = 25
+BATCH_SIZE = 128
+EPOCHS = 30
 
 # Imagenet normalization values
-mean = [0.485, 0.456, 0.406]
-std = [0.229, 0.224, 0.225]
+MEAN = [0.485, 0.456, 0.406]
+STD = [0.229, 0.224, 0.225]
 
 
 def objective(trial):
@@ -29,22 +29,23 @@ def objective(trial):
 
     transform_train = transforms.Compose(
         [
-            transforms.Resize((224, 224)),  # Resize the image to 224x224 pixels
+            transforms.Resize(
+                (224, 224), antialias=True
+            ),  # Resize the image to 224x224 pixels
             transforms.RandomHorizontalFlip(),
             transforms.RandomVerticalFlip(),
-            transforms.RandomRotation(20),
-            AdjustSharpness(3),
+            SharpnessEnhancement(3),
             transforms.ToTensor(),
-            transforms.Normalize(mean, std),
+            transforms.Normalize(MEAN, STD),
         ]
     )
 
     transform_validation = transforms.Compose(
         [
             transforms.Resize((224, 224)),  # Resize the image to 224x224 pixels
-            AdjustSharpness(3),
+            SharpnessEnhancement(3),
             transforms.ToTensor(),
-            transforms.Normalize(mean, std),
+            transforms.Normalize(MEAN, STD),
         ]
     )
     train_loader = DataLoader(
@@ -76,18 +77,18 @@ def objective(trial):
         EPOCHS,
         optimizer,
         criterion,
-        StoppingCriteria(3),
+        EarlyStopping(5, 0.001),
         True,
         False,
     )
-    val_loss, _, _ = net.validate(train_loader, criterion, verbose=False)
+    _, _, _, acc, _ = net.validate(train_loader, criterion, verbose=False)
 
-    return val_loss
+    return acc
 
 
 # Create a study object and optimize the objective function
-study = optuna.create_study(direction="minimize")
-study.optimize(objective, n_trials=200)
+study = optuna.create_study(direction="maximize")
+study.optimize(objective, n_trials=10)
 
 print("Best trial:")
 trial = study.best_trial

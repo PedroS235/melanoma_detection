@@ -77,6 +77,7 @@ class ImagePreprocessingPipeline:
 
         return final_img
 
+
 def plot_image(img):
     npimg = img.numpy()
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
@@ -85,8 +86,8 @@ def plot_image(img):
 
 def main():
 
-    benign_img = Image.open("./data/test/Benign/6318.jpg")
-    malignant_img = Image.open("./data/test/Malignant/5605.jpg")
+    benign_img = Image.open("./dataset/test/Benign/6299.jpg")
+    malignant_img = Image.open("./dataset/test/Malignant/5605.jpg")
 
     pipeline = ImagePreprocessingPipeline(2, 10)
 
@@ -94,23 +95,23 @@ def main():
     malignant_preprocessed = pipeline.process(malignant_img)
 
     # Display Images on a plot
-    _, ax = plt.subplots(2, 2, figsize=(10, 5))
+    # _, ax = plt.subplots(2, 2, figsize=(10, 5))
 
-    ax[0][0].imshow(benign_img)
-    ax[0][0].set_title("Benign Image")
-    ax[0][0].axis("off")  # Turn off axis numbering and ticks
+    plt.imshow(benign_img)
+    # plt.set_title("Benign Image")
+    plt.axis("off")  # Turn off axis numbering and ticks
 
-    ax[0][1].imshow(benign_preprocessed)
-    ax[0][1].set_title("Processed Benign Image")
-    ax[0][1].axis("off")  # Turn off axis numbering and ticks
-
-    ax[1][0].imshow(malignant_img)
-    ax[1][0].set_title("Malignant Image")
-    ax[1][0].axis("off")  # Turn off axis numbering and ticks
-
-    ax[1][1].imshow(malignant_preprocessed)
-    ax[1][1].set_title("Processed Malignant Image")
-    ax[1][1].axis("off")  # Turn off axis numbering and ticks
+    # ax[0][1].imshow(benign_preprocessed)
+    # ax[0][1].set_title("Processed Benign Image")
+    # ax[0][1].axis("off")  # Turn off axis numbering and ticks
+    #
+    # ax[1][0].imshow(malignant_img)
+    # ax[1][0].set_title("Malignant Image")
+    # ax[1][0].axis("off")  # Turn off axis numbering and ticks
+    #
+    # ax[1][1].imshow(malignant_preprocessed)
+    # ax[1][1].set_title("Processed Malignant Image")
+    # ax[1][1].axis("off")  # Turn off axis numbering and ticks
 
     plt.show()
 

@@ -1,12 +1,13 @@
 import os
 import sys
-from typing import Dict, Optional, Tuple, List
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+from melanoma_detection.regularization import L1Regularization
 from melanoma_detection.utils.metrics_utils import plot_metrics, compute_metrics
 from torch.optim import Optimizer
+from typing import Tuple, Dict
 
 PKG_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
 
@@ -15,6 +16,7 @@ class BaseNetwork(nn.Module):
     def __init__(self) -> None:
         super().__init__()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.l1_reg = L1Regularization()
 
     def fit(
         self,
@@ -23,7 +25,7 @@ class BaseNetwork(nn.Module):
         epochs: int,
         optimizer: Optimizer,
         criterion: nn.Module,
-        stopping_criteria=None,
+        early_stopping=None,
         verbose: bool = True,
         show_plot: bool = True,
     ) -> None:
@@ -49,10 +51,9 @@ class BaseNetwork(nn.Module):
 
                 # Forward and backward passes
                 outputs = self(inputs).squeeze()
-                l1_lambda = 1e-5
-                l1_norm = sum(p.abs().sum() for p in self.parameters())
-                loss = criterion(outputs, labels.float()) + l1_lambda * l1_norm
-                # loss = criterion(outputs, labels.float())
+                loss = criterion(outputs, labels.float()) + self.l1_reg(
+                    self.parameters()
+                )
                 loss.backward()
                 optimizer.step()
 
@@ -71,7 +72,7 @@ class BaseNetwork(nn.Module):
 
             if val_loader:
                 true, pred, val_loss, val_accuracy, val_metrics = self.validate(
-                    val_loader, criterion, verbose
+                    val_loader, criterion, False
                 )
                 val_losses.append(val_loss)
                 val_accuracies.append(val_accuracy)
@@ -80,19 +81,18 @@ class BaseNetwork(nn.Module):
                 if verbose:
                     print(
                         f"Epoch [{epoch + 1}/{epochs}] - \n"
-                        f"Train Loss: {running_loss / len(train_loader):.6f}\n"
+                        f"Train Loss: {running_loss / len(train_loader):.6f} | "
                         f"Train Accuracy: {train_accuracy:.2f}%\n"
-                        f"Val Loss: {val_loss:.6f}\n"
-                        f"Val Accuracy: {val_accuracy:.2f}%\n"
-                        f"Val Metrics: {val_metrics}"
+                        f"Val Loss: {val_loss:.6f} | "
+                        f"Val Accuracy: {val_accuracy:.2f}%"
                     )
 
                 # Early Stopping
-                if stopping_criteria:
-                    stopping_criteria(val_loss, self)
-                    if stopping_criteria.early_stop:
+                if early_stopping:
+                    early_stopping(val_loss, self)
+                    if early_stopping.early_stop:
                         print("Early stopping triggered.")
-                        stopping_criteria.load_checkpoint(self)
+                        early_stopping.load_checkpoint(self)
                         break
             else:
                 if verbose:
@@ -138,7 +138,7 @@ class BaseNetwork(nn.Module):
                 total += labels.size(0)
 
                 all_labels.append(labels)
-                all_outputs.append(outputs)
+                all_outputs.append(probabilities)
 
         accuracy = 100 * correct / total
         all_labels = torch.cat(all_labels)
@@ -163,31 +163,3 @@ class BaseNetwork(nn.Module):
 
     def load(self, path: str) -> None:
         self.load_state_dict(torch.load(path))
-
-
-class StoppingCriteria:
-    def __init__(self, patience: int = 3, delta: float = 0):
-        self.patience = patience
-        self.delta = delta
-        self.best_loss = None
-        self.counter = 0
-        self.early_stop = False
-
-    def __call__(self, val_loss: float, model: BaseNetwork):
-        if self.best_loss is None:
-            self.best_loss = val_loss
-            self.save_checkpoint(model)
-        elif val_loss > self.best_loss - self.delta:
-            self.counter += 1
-            if self.counter >= self.patience:
-                self.early_stop = True
-        else:
-            self.best_loss = val_loss
-            self.save_checkpoint(model)
-            self.counter = 0
-
-    def save_checkpoint(self, model: BaseNetwork):
-        model.save("checkpoint.pt")
-
-    def load_checkpoint(self, model: BaseNetwork):
-        model.load("checkpoint.pt")

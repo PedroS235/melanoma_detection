@@ -12,6 +12,7 @@ from sklearn.metrics import (
     confusion_matrix,
     precision_recall_curve,
 )
+import pandas as pd
 
 
 def generate_plots_paper(y_true: torch.Tensor, y_pred: torch.Tensor) -> None:
@@ -49,7 +50,18 @@ def generate_plots_paper(y_true: torch.Tensor, y_pred: torch.Tensor) -> None:
     plt.figure(figsize=(10, 6))
     metric_names = ["accuracy", "precision", "recall", "f1_score"]
     metric_values = [metrics[name] for name in metric_names]
-    sns.barplot(x=metric_names, y=metric_values, palette="hls")
+    # Create a DataFrame for the metrics
+    data = pd.DataFrame({"Metric": metric_names, "Value": metric_values})
+    # Use hue and set legend to False
+    sns.barplot(
+        x="Metric",
+        y="Value",
+        hue="Metric",
+        data=data,
+        palette="hls",
+        dodge=False,
+        legend=False,
+    )
     plt.ylim(0, 1)
     for i, v in enumerate(metric_values):
         plt.text(i, v + 0.02, f"{v:.2f}", ha="center", va="bottom")
@@ -60,6 +72,8 @@ def generate_plots_paper(y_true: torch.Tensor, y_pred: torch.Tensor) -> None:
 def compute_metrics(y_true: torch.Tensor, y_pred: torch.Tensor) -> Dict[str, float]:
     y_pred = y_pred.cpu().numpy() > 0.5
     y_true = y_true.cpu().numpy() > 0.5
+    # y_pred = torch.sigmoid(y_pred).cpu().numpy() > 0.5
+    # y_true = y_true.cpu().numpy()
 
     accuracy = accuracy_score(y_true, y_pred)
     precision = precision_score(y_true, y_pred)
@@ -88,10 +102,8 @@ def plot_metrics(
     sns.set_palette("hls")
     epochs = range(1, len(train_losses) + 1)
 
-    plt.figure(figsize=(14, 14))
-
     # Plot losses
-    plt.subplot(3, 2, 1)
+    plt.figure(figsize=(10, 6))
     plt.plot(epochs, train_losses, "bo-", label="Training loss")
     plt.plot(epochs, val_losses, "ro-", label="Validation loss")
     plt.xlabel("Epochs")
@@ -101,7 +113,7 @@ def plot_metrics(
     plt.show()
 
     # Plot accuracies
-    plt.subplot(3, 2, 2)
+    plt.figure(figsize=(10, 6))
     plt.plot(epochs, train_accuracies, "bo-", label="Training accuracy")
     plt.plot(epochs, val_accuracies, "ro-", label="Validation accuracy")
     plt.xlabel("Epochs")
@@ -111,7 +123,7 @@ def plot_metrics(
     plt.show()
 
     # Plot Precision-Recall Curve
-    plt.subplot(3, 2, 3)
+    plt.figure(figsize=(10, 6))
     y_true_np = y_true.cpu().numpy()
     y_pred_prob_np = y_pred_prob.cpu().numpy()
     precision, recall, _ = precision_recall_curve(y_true_np, y_pred_prob_np)
@@ -123,7 +135,7 @@ def plot_metrics(
     plt.show()
 
     # Plot Confusion Matrix
-    plt.subplot(3, 2, 4)
+    plt.figure(figsize=(10, 6))
     y_pred_np = y_pred_prob_np > 0.5
     cm = confusion_matrix(y_true_np, y_pred_np)
     sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", cbar=False)
@@ -134,17 +146,16 @@ def plot_metrics(
 
     # Plot ROC Curve
     fpr, tpr, _ = roc_curve(y_true_np, y_pred_prob_np)
-    plt.subplot(3, 2, 5)
+    plt.figure(figsize=(10, 6))
     plt.plot(fpr, tpr, color="blue", lw=2, label=f'AUC = {metrics["auc"]:.2f}')
     plt.plot([0, 1], [0, 1], color="grey", lw=2, linestyle="--")
     plt.xlabel("False Positive Rate")
     plt.ylabel("True Positive Rate")
     plt.title("Receiver Operating Characteristic (ROC) Curve")
     plt.legend(loc="lower right")
-
     plt.show()
 
     # Print other metrics
     print("Validation Metrics:")
-    for metric, values in metrics.items():
-        print(f"{metric}: {values:.4f}")
+    for metric, value in metrics.items():
+        print(f"{metric}: {value:.4f}")
