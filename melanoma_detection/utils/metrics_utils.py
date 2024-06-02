@@ -37,6 +37,16 @@ def generate_plots_paper(y_true: torch.Tensor, y_pred: torch.Tensor) -> None:
     plt.legend(loc="lower right")
     plt.show()
 
+    # Plot Precision-Recall Curve
+    plt.figure(figsize=(10, 6))
+    precision, recall, _ = precision_recall_curve(y_true, y_pred_prob)
+    plt.plot(recall, precision, marker=".", label="Precision-Recall Curve")
+    plt.xlabel("Recall")
+    plt.ylabel("Precision")
+    plt.title("Precision-Recall Curve")
+    plt.legend()
+    plt.show()
+
     # 2. Confusion Matrix
     cm = confusion_matrix(y_true, y_pred)
     plt.figure(figsize=(10, 6))
@@ -48,7 +58,7 @@ def generate_plots_paper(y_true: torch.Tensor, y_pred: torch.Tensor) -> None:
 
     # 3. Metrics Plot
     plt.figure(figsize=(10, 6))
-    metric_names = ["accuracy", "precision", "recall", "f1_score"]
+    metric_names = ["accuracy", "precision", "recall", "f1_score", "auc"]
     metric_values = [metrics[name] for name in metric_names]
     # Create a DataFrame for the metrics
     data = pd.DataFrame({"Metric": metric_names, "Value": metric_values})
@@ -159,3 +169,68 @@ def plot_metrics(
     print("Validation Metrics:")
     for metric, value in metrics.items():
         print(f"{metric}: {value:.4f}")
+
+
+def plot_metrics_comparison(ours, other):
+    # Define the metrics data
+    metrics = {
+        "Model": [
+            "Ours",
+            "Ours",
+            "Ours",
+            "Ours",
+            "Ours",
+            "ResNet50",
+            "ResNet50",
+            "ResNet50",
+            "ResNet50",
+            "ResNet50",
+        ],
+        "Metric": [
+            "Accuracy",
+            "Precision",
+            "Recall",
+            "F1 Score",
+            "AUC",
+            "Accuracy",
+            "Precision",
+            "Recall",
+            "F1 Score",
+            "AUC",
+        ],
+        "Value": [
+            ours["accuracy"],
+            ours["precision"],
+            ours["recall"],
+            ours["f1_score"],
+            ours["auc"],
+            other["accuracy"],
+            other["precision"],
+            other["recall"],
+            other["f1_score"],
+            other["auc"],
+        ],
+    }
+
+    # Convert the dictionary to a DataFrame
+    df = pd.DataFrame(metrics)
+
+    plt.figure(figsize=(10, 6))
+    ax = sns.barplot(x="Metric", y="Value", hue="Model", data=df, palette="hls")
+
+    # Add the numbers on top of each bar
+    for p in ax.patches:
+        ax.annotate(
+            format(p.get_height(), ".2f"),
+            (p.get_x() + p.get_width() / 2.0, p.get_height()),
+            ha="center",
+            va="center",
+            xytext=(0, 9),
+            textcoords="offset points",
+        )
+
+    plt.legend(title="Model", loc="lower left")
+
+    plt.title("Model Performance Comparison")
+    plt.ylim(0, 1)
+    plt.show()
